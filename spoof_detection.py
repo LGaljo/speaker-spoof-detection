@@ -196,16 +196,16 @@ def run_test():
 
 def train_model(dataset):
     train_size = ceil(num_samples * 0.9)
-    val_size = floor(num_samples * 0.1)
+    val_size = num_samples - train_size
 
     dataset = dataset.shuffle(128)
     train_ds = dataset.take(train_size)
     val_ds = dataset.skip(val_size)
     val_ds = val_ds.take(val_size)
 
-    # print('Validation set size', len(val_files))
+    print('Validation set size', val_size)
     # print('Test set size', len(test_files))
-    # print('Training set size', len(train_files))
+    print('Training set size', train_size)
 
     input_shape = train_ds.take(1).get_single_element(0)[0].shape
     print('Input shape:', input_shape)
@@ -244,6 +244,8 @@ def train_model(dataset):
     metrics = history.history
     plt.plot(history.epoch, metrics['loss'], metrics['val_loss'])
     plt.legend(['loss', 'val_loss'])
+    plt.xlabel('Epochs')
+    plt.ylabel('Share')
     plt.show()
 
 
