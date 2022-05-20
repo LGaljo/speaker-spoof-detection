@@ -110,6 +110,12 @@ def fetch_dataset():
     return filenames, num_samples
 
 
+def load_model():
+    new_model = tf.keras.models.load_model('saved_model/model')
+    new_model.summary()
+    return new_model
+
+
 def create_model():
     # Create CNN model
     model = models.Sequential([
@@ -171,6 +177,31 @@ def run_test():
 
     #
     confusion_mtx = tf.math.confusion_matrix(y_true, y_pred)
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+    for value in zip(y_true, y_pred):
+        if value[0] == 0:
+            if value[1] == 0:
+                TN += 1
+            else:
+                FP += 1
+        else:
+            if value[1] == 0:
+                FN += 1
+            else:
+                TP += 1
+
+    print(TP, TN, FP, FN)
+    print("True  positive ", TP)
+    print("True  negative ", TN)
+    print("False positive ", FP)
+    print("False negative ", FN)
+
+    print("Specificity ", TN / (TN + FP))
+    print("Sensitivity ", TP / (TP + FN))
+
     plt.figure(figsize=(10, 8))
     sns.heatmap(confusion_mtx,
                 xticklabels=labels,
@@ -217,7 +248,7 @@ def train_model(dataset):
     norm_layer.adapt(data=train_ds.map(map_func=lambda spec, label: spec))
 
     # Create a batches with 64 samples
-    batch_size = 64
+    batch_size = 128
     train_ds = train_ds.batch(batch_size)
     val_ds = val_ds.batch(batch_size)
 
@@ -251,6 +282,7 @@ def train_model(dataset):
 
 if __name__ == '__main__':
     filenames_train, num_samples = fetch_dataset()
+    # model = load_model()
     model = create_model()
 
     # Preprocess dataset
