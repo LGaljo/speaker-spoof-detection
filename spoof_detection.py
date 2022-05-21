@@ -211,6 +211,7 @@ def run_test():
     plt.ylabel('Label')
     plt.show()
 
+    print("My own spoof")
     # Take the file out of test dataset
     sample_file = pathlib.Path('own_tests/spoof_Recording_3.wav')
 
@@ -220,6 +221,63 @@ def run_test():
     # Predict and draw the predictions
     for spectrogram, label in sample_ds.batch(1):
         prediction = model(spectrogram)
+        print(prediction)
+        plt.bar(labels, tf.nn.softmax(prediction[0]))
+        plt.title(f'Predictions for "{labels[label[0]]}"')
+        plt.show()
+
+    print("My own genuine")
+    # Take the file out of test dataset
+    sample_file = pathlib.Path('own_tests/genuine_Recording_1.wav')
+
+    # Preprocess single file
+    sample_ds = preprocess_dataset([str(sample_file)])
+
+    # Predict and draw the predictions
+    for spectrogram, label in sample_ds.batch(1):
+        prediction = model(spectrogram)
+        print(prediction)
+        plt.bar(labels, tf.nn.softmax(prediction[0]))
+        plt.title(f'Predictions for "{labels[label[0]]}"')
+        plt.show()
+
+    print("Theirs spoof")
+    # Take the file out of test dataset
+    sample_file = pathlib.Path('DS_10283_3055/ASVspoof2017_V2_dev/spoof_D_1001387.wav')
+
+    # Preprocess single file
+    sample_ds = preprocess_dataset([str(sample_file)])
+
+    # Predict and draw the predictions
+    for spectrogram, label in sample_ds.batch(1):
+        prediction = model(spectrogram)
+        print(prediction)
+        plt.bar(labels, tf.nn.softmax(prediction[0]))
+        plt.title(f'Predictions for "{labels[label[0]]}"')
+        plt.show()
+
+    print("Theirs genuine")
+    # Take the file out of test dataset
+    sample_file = pathlib.Path('DS_10283_3055/ASVspoof2017_V2_dev/genuine_D_1000028.wav')
+
+    # Preprocess single file
+    sample_ds = preprocess_dataset([
+        str(
+            pathlib.Path('DS_10283_3055/ASVspoof2017_V2_dev/genuine_D_1000028.wav')
+        ),
+        str(
+            pathlib.Path('DS_10283_3055/ASVspoof2017_V2_dev/genuine_D_1000107.wav')
+        ),
+        str(
+            pathlib.Path('DS_10283_3055/ASVspoof2017_V2_dev/genuine_D_1000402.wav')
+        )
+    ])
+
+    # Predict and draw the predictions
+    for spectrogram, label in sample_ds.batch(3):
+        prediction = model.predict(spectrogram)
+        print(prediction)
+        print(np.argmax(prediction, axis=1))
         plt.bar(labels, tf.nn.softmax(prediction[0]))
         plt.title(f'Predictions for "{labels[label[0]]}"')
         plt.show()
@@ -260,7 +318,7 @@ def train_model(dataset):
     val_ds = val_ds.cache().prefetch(AUTOTUNE)
 
     # Fit the model to train data
-    EPOCHS = 15
+    EPOCHS = 10
     history = model.fit(
         train_ds,
         validation_data=val_ds,
