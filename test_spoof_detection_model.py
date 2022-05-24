@@ -18,7 +18,6 @@ from tensorflow.python.framework import dtypes
 # tf.random.set_seed(seed)
 # np.random.seed(seed)
 from dataset_preprocessing import preprocess_dataset, fetch_dataset
-from test_spoof_detection_model import predict_file, run_test
 
 labels = ['spoof', 'genuine']
 
@@ -39,35 +38,86 @@ def load_model():
     return new_model
 
 
-def create_model():
-    # Create CNN model
-    model = models.Sequential([
-        layers.Input(shape=(61, 513, 1)),
-        # Downsample the input.
-        layers.Resizing(64, 64),
-        # Normalize.
-        # norm_layer,
-        layers.Conv2D(64, 3, activation='relu'),
-        layers.Conv2D(128, 3, activation='relu'),
-        layers.MaxPooling2D(),
-        layers.Dropout(0.25),
-        layers.Flatten(),
-        layers.Dense(256, activation='relu'),
-        layers.Dropout(0.5),
-        layers.Dense(len(labels), activation='softmax'),
-    ])
+def run_test():
+    data_dir_dev = pathlib.Path(DATASET_PATH_DEV)
+    filenames_test = tf.io.gfile.glob(str(data_dir_dev) + '/*')
+    test_ds = preprocess_dataset(filenames_test)
 
-    # Tell more about model
-    model.summary()
+    print('Number of total test samples:', len(filenames_test))
 
-    # Prepare for training
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(),
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-        metrics=['accuracy'],
-    )
+    #
+    test_audio = []
+    test_labels = []
 
-    return model
+    #
+    for audio, label in test_ds:
+        test_audio.append(audio.numpy())
+        test_labels.append(label.numpy())
+
+    #
+    test_audio = np.array(test_audio)
+    test_labels = np.array(test_labels)
+
+    #
+    y_pred = np.argmax(model.predict(test_audio), axis=1)
+    y_true = test_labels
+
+    #
+    test_acc = sum(y_pred == y_true) / len(y_true)
+    print(f'Test set accuracy: {test_acc:.0%}')
+
+    #
+    confusion_mtx = tf.math.confusion_matrix(y_true, y_pred)
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+    for value in zip(y_true, y_pred):
+        if value[0] == 0:
+            if value[1] == 0:
+                TN += 1
+            else:
+                FP += 1
+        else:
+            if value[1] == 0:
+                FN += 1
+            else:
+                TP += 1
+
+    print(TP, TN, FP, FN)
+    print("True  positive ", TP)
+    print("True  negative ", TN)
+    print("False positive ", FP)
+    print("False negative ", FN)
+
+    print("Specificity ", TN / (TN + FP))
+    print("Sensitivity ", TP / (TP + FN))
+
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(confusion_mtx,
+                xticklabels=labels,
+                yticklabels=labels,
+                annot=True, fmt='g')
+    plt.xlabel('Prediction')
+    plt.ylabel('Label')
+    plt.show()
+
+
+def predict_file(filepath):
+    print(filepath)
+    sample_ds = preprocess_dataset([str(filepath)])
+
+    # Predict and draw the predictions
+    for spectrogram, label in sample_ds.batch(1):
+        prediction = model(spectrogram)
+        # print(prediction)
+        if prediction.numpy()[0][0] < prediction.numpy()[0][1]:
+            print("Genuine", prediction)
+        else:
+            print("Spoof", prediction)
+        plt.bar(labels, tf.nn.softmax(prediction[0]))
+        plt.title(f'Predictions for "{filepath}" "{labels[label[0]]}"')
+        plt.show()
 
 
 def train_model(dataset):
@@ -127,13 +177,13 @@ def train_model(dataset):
 
 if __name__ == '__main__':
     filenames_train, num_samples = fetch_dataset()
-    # model = load_model()
-    model = create_model()
+    model = load_model()
 
-    # Preprocess dataset
-    full_dataset = preprocess_dataset(filenames_train)
+    # run_test()
 
-    for i in range(1):
-        train_model(full_dataset)
+    predict_file('owndataset/genuine/genuine_Luka_s20fe_1.wav')
+    #
+    # for root, dirs, filenames in os.walk('owndataset', topdown=False):
+    #     for filename in filenames:
+    #         predict_file(os.path.join(*[root, filename]))
 
-    run_test()
