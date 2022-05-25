@@ -26,11 +26,7 @@ AUTOTUNE = tf.data.AUTOTUNE
 DATASET_PATH_TRAIN = 'DS_10283_3055/ASVspoof2017_V2_train'
 DATASET_PATH_DEV = 'DS_10283_3055/ASVspoof2017_V2_dev'
 DATASET_PATH_EVAL = 'DS_10283_3055/ASVspoof2017_V2_eval'
-
-DATASET_PATH_TRAIN_LABELS = 'DS_10283_3055/protocol_V2/ASVspoof2017_V2_train.trn.txt'
-DATASET_PATH_EVAL_LABELS = 'DS_10283_3055/protocol_V2/ASVspoof2017_V2_eval.trl.txt'
-DATASET_PATH_DEV_LABELS = 'DS_10283_3055/protocol_V2/ASVspoof2017_V2_dev.trl.txt'
-
+OWNDATASET_PATH = 'owndataset'
 
 def load_model():
     new_model = tf.keras.models.load_model('saved_model/model')
@@ -38,8 +34,8 @@ def load_model():
     return new_model
 
 
-def run_test():
-    data_dir_dev = pathlib.Path(DATASET_PATH_DEV)
+def run_test(model, path_to_dataset):
+    data_dir_dev = pathlib.Path(path_to_dataset)
     filenames_test = tf.io.gfile.glob(str(data_dir_dev) + '/*')
     test_ds = preprocess_dataset(filenames_test)
 
@@ -90,8 +86,13 @@ def run_test():
     print("False positive ", FP)
     print("False negative ", FN)
 
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
     print("Specificity ", TN / (TN + FP))
-    print("Sensitivity ", TP / (TP + FN))
+    print("Sensitivity/Recall ", recall)
+    print("Precision ", precision)
+
+    print("F1 Score ", 2 * ((precision * recall)/(precision + recall)))
 
     plt.figure(figsize=(10, 8))
     sns.heatmap(confusion_mtx,
@@ -103,7 +104,7 @@ def run_test():
     plt.show()
 
 
-def predict_file(filepath):
+def predict_file(model, filepath):
     print(filepath)
     sample_ds = preprocess_dataset([str(filepath)])
 
@@ -120,70 +121,13 @@ def predict_file(filepath):
         plt.show()
 
 
-def train_model(dataset):
-    train_size = ceil(num_samples * 0.9)
-    val_size = num_samples - train_size
-
-    dataset = dataset.shuffle(128)
-    train_ds = dataset.take(train_size)
-    val_ds = dataset.skip(val_size)
-    val_ds = val_ds.take(val_size)
-
-    print('Validation set size', val_size)
-    # print('Test set size', len(test_files))
-    print('Training set size', train_size)
-
-    input_shape = train_ds.take(1).get_single_element(0)[0].shape
-    print('Input shape:', input_shape)
-
-    # Instantiate the `tf.keras.layers.Normalization` layer.
-    norm_layer = layers.Normalization()
-    # Fit the state of the layer to the spectrograms
-    # with `Normalization.adapt`.
-    norm_layer.adapt(data=train_ds.map(map_func=lambda spec, label: spec))
-
-    # Create a batches with 64 samples
-    batch_size = 128
-    train_ds = train_ds.batch(batch_size)
-    val_ds = val_ds.batch(batch_size)
-
-    print('Input shape: ', train_ds.take(1).get_single_element(0)[0].shape)
-
-    # Set TF to cache files to prevent reading them on each epoch
-    # Set TF to prefetch files for next epoch, while training on current batch
-    train_ds = train_ds.cache().prefetch(AUTOTUNE)
-    val_ds = val_ds.cache().prefetch(AUTOTUNE)
-
-    # Fit the model to train data
-    EPOCHS = 100
-    history = model.fit(
-        train_ds,
-        validation_data=val_ds,
-        epochs=EPOCHS,
-        callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=10),
-    )
-
-    # Save model to disk
-    model.save('saved_model/model')
-
-    #
-    metrics = history.history
-    plt.plot(history.epoch, metrics['loss'], metrics['val_loss'])
-    plt.legend(['loss', 'val_loss'])
-    plt.xlabel('Epochs')
-    plt.ylabel('Share')
-    plt.show()
-
-
 if __name__ == '__main__':
     filenames_train, num_samples = fetch_dataset()
-    model = load_model()
+    _model = load_model()
 
-    # run_test()
+    # run_test(_model, DATASET_PATH_DEV)
+    # run_test(_model, OWNDATASET_PATH)
 
-    predict_file('owndataset/genuine/genuine_Luka_s20fe_1.wav')
-    #
-    # for root, dirs, filenames in os.walk('owndataset', topdown=False):
-    #     for filename in filenames:
-    #         predict_file(os.path.join(*[root, filename]))
-
+    for root, dirs, filenames in os.walk('owndataset', topdown=False):
+        for filename in filenames:
+            predict_file(_model, os.path.join(*[root, filename]))

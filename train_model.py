@@ -18,19 +18,13 @@ from tensorflow.python.framework import dtypes
 # tf.random.set_seed(seed)
 # np.random.seed(seed)
 from dataset_preprocessing import preprocess_dataset, fetch_dataset
-from test_spoof_detection_model import predict_file, run_test
+from test_model import run_test
 
 labels = ['spoof', 'genuine']
 
 AUTOTUNE = tf.data.AUTOTUNE
 
-DATASET_PATH_TRAIN = 'DS_10283_3055/ASVspoof2017_V2_train'
 DATASET_PATH_DEV = 'DS_10283_3055/ASVspoof2017_V2_dev'
-DATASET_PATH_EVAL = 'DS_10283_3055/ASVspoof2017_V2_eval'
-
-DATASET_PATH_TRAIN_LABELS = 'DS_10283_3055/protocol_V2/ASVspoof2017_V2_train.trn.txt'
-DATASET_PATH_EVAL_LABELS = 'DS_10283_3055/protocol_V2/ASVspoof2017_V2_eval.trl.txt'
-DATASET_PATH_DEV_LABELS = 'DS_10283_3055/protocol_V2/ASVspoof2017_V2_dev.trl.txt'
 
 
 def load_model():
@@ -43,10 +37,7 @@ def create_model():
     # Create CNN model
     model = models.Sequential([
         layers.Input(shape=(61, 513, 1)),
-        # Downsample the input.
         layers.Resizing(64, 64),
-        # Normalize.
-        # norm_layer,
         layers.Conv2D(64, 3, activation='relu'),
         layers.Conv2D(128, 3, activation='relu'),
         layers.MaxPooling2D(),
@@ -97,8 +88,6 @@ def train_model(dataset):
     train_ds = train_ds.batch(batch_size)
     val_ds = val_ds.batch(batch_size)
 
-    print('Input shape: ', train_ds.take(1).get_single_element(0)[0].shape)
-
     # Set TF to cache files to prevent reading them on each epoch
     # Set TF to prefetch files for next epoch, while training on current batch
     train_ds = train_ds.cache().prefetch(AUTOTUNE)
@@ -136,4 +125,4 @@ if __name__ == '__main__':
     for i in range(1):
         train_model(full_dataset)
 
-    run_test()
+    run_test(model, DATASET_PATH_DEV)

@@ -20,10 +20,6 @@ DATASET_PATH_TRAIN = 'DS_10283_3055/ASVspoof2017_V2_train'
 DATASET_PATH_DEV = 'DS_10283_3055/ASVspoof2017_V2_dev'
 DATASET_PATH_EVAL = 'DS_10283_3055/ASVspoof2017_V2_eval'
 
-DATASET_PATH_TRAIN_LABELS = 'DS_10283_3055/protocol_V2/ASVspoof2017_V2_train.trn.txt'
-DATASET_PATH_EVAL_LABELS = 'DS_10283_3055/protocol_V2/ASVspoof2017_V2_eval.trl.txt'
-DATASET_PATH_DEV_LABELS = 'DS_10283_3055/protocol_V2/ASVspoof2017_V2_dev.trl.txt'
-
 
 def decode_audio(audio_binary):
     # Decode WAV-encoded audio files to `float32` tensors, normalized
@@ -60,10 +56,11 @@ def get_spectrogram(waveform):
     # Concatenate the waveform with `zero_padding`, which ensures all audio clips are of the same length.
     equal_length = tf.concat([waveform, zero_padding], 0)
     # Convert the waveform to a spectrogram via a STFT.
+
     spectrogram = tf.signal.stft(equal_length, frame_length=512, frame_step=256, fft_length=1024)
     # Obtain the magnitude of the STFT.
+    # Absolute value of real and imaginary part of fft
     spectrogram = tf.abs(spectrogram)
-    print(spectrogram)
     # Add a `channels` dimension, so that the spectrogram can be used as image-like input data with
     # convolution layers (which expect shape (`batch_size`, `height`, `width`, `channels`)).
     spectrogram = spectrogram[..., tf.newaxis]
