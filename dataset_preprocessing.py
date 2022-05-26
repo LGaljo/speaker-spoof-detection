@@ -47,24 +47,25 @@ def get_waveform_and_label(file_path):
 
 
 def get_spectrogram(waveform):
-    # Zero-padding for an audio waveform with less than 16,000 samples.
+    # # Zero-padding for an audio waveform with less than 16,000 samples.
     input_len = 16000
     waveform = waveform[:input_len]
-    zero_padding = tf.zeros([16000] - tf.shape(waveform), dtype=tf.float32)
-    # Cast the waveform tensors' dtype to float32.
-    waveform = tf.cast(waveform, dtype=tf.float32)
-    # Concatenate the waveform with `zero_padding`, which ensures all audio clips are of the same length.
-    equal_length = tf.concat([waveform, zero_padding], 0)
-    # Convert the waveform to a spectrogram via a STFT.
+    # zero_padding = tf.zeros([16000] - tf.shape(waveform), dtype=tf.float32)
+    # # Cast the waveform tensors' dtype to float32.
+    # waveform = tf.cast(waveform, dtype=tf.float32)
+    # # Concatenate the waveform with `zero_padding`, which ensures all audio clips are of the same length.
+    # equal_length = tf.concat([waveform, zero_padding], 0)
+    # # Convert the waveform to a spectrogram via a STFT.
 
-    spectrogram = tf.signal.stft(equal_length, frame_length=512, frame_step=256, fft_length=1024)
-    # Obtain the magnitude of the STFT.
-    # Absolute value of real and imaginary part of fft
-    spectrogram = tf.abs(spectrogram)
-    # Add a `channels` dimension, so that the spectrogram can be used as image-like input data with
-    # convolution layers (which expect shape (`batch_size`, `height`, `width`, `channels`)).
-    spectrogram = spectrogram[..., tf.newaxis]
-    return spectrogram
+    # spectrogram = tf.signal.stft(equal_length, frame_length=512, frame_step=256, fft_length=1024)
+    # # Obtain the magnitude of the STFT.
+    # # Absolute value of real and imaginary part of fft
+    # spectrogram = tf.abs(spectrogram)
+    # # Add a `channels` dimension, so that the spectrogram can be used as image-like input data with
+    # # convolution layers (which expect shape (`batch_size`, `height`, `width`, `channels`)).
+    # spectrogram = spectrogram[..., tf.newaxis]
+    # return spectrogram
+    return waveform
 
 
 def get_spectrogram_and_label_id(audio, label):
@@ -75,7 +76,6 @@ def get_spectrogram_and_label_id(audio, label):
 
 def preprocess_dataset(files):
     files_ds = tf.data.Dataset.from_tensor_slices(files)
-    # print(get_waveform_and_label(files_ds.take(1).get_single_element(0)))
     output_ds = files_ds.map(map_func=get_waveform_and_label, num_parallel_calls=AUTOTUNE)
     output_ds = output_ds.map(map_func=get_spectrogram_and_label_id, num_parallel_calls=AUTOTUNE)
     return output_ds

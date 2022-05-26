@@ -5,6 +5,7 @@ def convert_to_tflite():
     saved_model_dir = 'saved_model/model'
 
     converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)
+    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS, tf.lite.OpsSet.SELECT_TF_OPS]
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
     converter.allow_custom_ops = True
 
