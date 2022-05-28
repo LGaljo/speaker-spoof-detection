@@ -252,7 +252,7 @@ class MainActivity : AppCompatActivity() {
   private fun runFft(buffer: FloatArray, length: Int): Array<Float?> {
     val noise: Noise = Noise.real(length)
     var dst = FloatArray(buffer.size + 2) // real output length equals src + 2
-    val values = arrayOfNulls<Float>(length / 2 + 1)
+    val values = arrayOfNulls<Float>(buffer.size)
 
     dst = noise.fft(buffer, dst)
 
