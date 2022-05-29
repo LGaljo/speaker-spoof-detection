@@ -52,6 +52,12 @@ class MainActivity : AppCompatActivity() {
   private var hashMap: HashMap<String, Float> = HashMap()
   var startTime: Long = System.currentTimeMillis();
 
+  private val threshold = 0.9f;
+  private var speaking = false;
+  private var timeDetecting = 0.0f;
+  private val lowestFreq = 85;
+  private val highestFreq = 250;
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -111,13 +117,45 @@ class MainActivity : AppCompatActivity() {
     val run = object : Runnable {
       override fun run() {
         val startClassificationTime = System.currentTimeMillis()
+        speaking = false;
+        timeDetecting = 0.0F;
 
-        // Load the latest audio sample
-        audioTensor.load(record)
+        while(!speaking) {
+          val startDetecting = System.currentTimeMillis()
+
+          // Load the latest audio sample
+          audioTensor.load(record)
 
         // FFT result
-        val values: Array<Float?> = runFft(audioTensor.tensorBuffer.floatArray, 1024)
-        // TODO: Determine if human speaks
+          val values: Array<Float?> = runFft(audioTensor.tensorBuffer.floatArray, 1024)
+
+          for (i in lowestFreq until highestFreq) {
+            if (values[i]!! > threshold) {
+              Log.d(TAG, "Speaking");
+              speaking = true;
+            }
+          }
+
+          val stopDetecting = System.currentTimeMillis();
+
+          timeDetecting += stopDetecting - startDetecting;
+
+          if(!speaking){
+            // stop recording after 10sec
+            if(timeDetecting > 10000){
+              bindings?.recordButton?.setImageDrawable(
+                AppCompatResources.getDrawable(
+                  applicationContext,
+                  R.drawable.ic_outline_mic
+                )
+              )
+              stopAudioClassification()
+              return
+            } else {
+              handler.postDelayed(this, classificationInterval)
+            }
+          }
+        }
 
         val output = classifier.classify(audioTensor)
 
@@ -139,11 +177,15 @@ class MainActivity : AppCompatActivity() {
           }
         } else {
           if (filteredModelOutput[0].label.equals("spoof")) {
-            hashMap["spoof"] = (0.9 * hashMap["spoof"]!! + 0.1 * filteredModelOutput[0].score).toFloat()
-            hashMap["genuine"] = (0.9 * hashMap["genuine"]!! + 0.1 * filteredModelOutput[1].score).toFloat()
+            hashMap["spoof"] =
+              (0.9 * hashMap["spoof"]!! + 0.1 * filteredModelOutput[0].score).toFloat()
+            hashMap["genuine"] =
+              (0.9 * hashMap["genuine"]!! + 0.1 * filteredModelOutput[1].score).toFloat()
           } else {
-            hashMap["spoof"] = (0.9 * hashMap["spoof"]!! + 0.1 * filteredModelOutput[1].score).toFloat()
-            hashMap["genuine"] = (0.9 * hashMap["genuine"]!! + 0.1 * filteredModelOutput[0].score).toFloat()
+            hashMap["spoof"] =
+              (0.9 * hashMap["spoof"]!! + 0.1 * filteredModelOutput[1].score).toFloat()
+            hashMap["genuine"] =
+              (0.9 * hashMap["genuine"]!! + 0.1 * filteredModelOutput[0].score).toFloat()
           }
         }
 
@@ -172,14 +214,19 @@ class MainActivity : AppCompatActivity() {
             probabilitiesAdapter.categoryList = clfs
             probabilitiesAdapter.notifyDataSetChanged()
           }
-          bindings?.recordButton?.setImageDrawable(AppCompatResources.getDrawable(applicationContext, R.drawable.ic_outline_mic))
+          bindings?.recordButton?.setImageDrawable(
+            AppCompatResources.getDrawable(
+              applicationContext,
+              R.drawable.ic_outline_mic
+            )
+          )
           stopAudioClassification()
         }
       }
     }
 
     // Start the classification process
-    handler.post(run)
+    handler.postDelayed(run, classificationInterval)
 
     // Save the instances we just created for use later
     audioClassifier = classifier
@@ -263,6 +310,7 @@ class MainActivity : AppCompatActivity() {
 
 //      System.out.printf("[%d] re: %.5f, im: %.5f\n", i, real, imaginary);
     }
+
     noise.close()
     return values
   }
