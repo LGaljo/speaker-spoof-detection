@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.tensorflow.lite.examples.soundclassifier
+package si.uniljfri.arp1.spoofdetection
 
 import android.animation.ObjectAnimator
 import android.content.res.ColorStateList
@@ -22,7 +22,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.recyclerview.widget.RecyclerView
-import org.tensorflow.lite.examples.soundclassifier.databinding.ItemProbabilityBinding
+import si.uniljfri.arp1.spoofdetection.databinding.ItemProbabilityBinding
 import org.tensorflow.lite.support.label.Category
 
 internal class ProbabilitiesAdapter : RecyclerView.Adapter<ProbabilitiesAdapter.ViewHolder>() {

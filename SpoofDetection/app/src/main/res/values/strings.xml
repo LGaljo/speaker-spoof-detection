@@ -1,7 +1,9 @@
 <resources>
-    <string name="app_name" translatable="false">TFL Sound Classifier</string>
+    <string name="app_name" translatable="false">Spoof detection</string>
     <string name="label_input" translatable="false">Input:</string>
     <string name="overlap_factor_label" translatable="false">Classification Interval</string>
     <string name="tensorflow_lite_logo" translatable="false">TensorFlow Lite Logo</string>
     <string name="mic_activation">mic activation</string>
+    <string name="no_speech_detected">No speech detected</string>
+    <string name="speech_detected">Speech detected</string>
 </resources>

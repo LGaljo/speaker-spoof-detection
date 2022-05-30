@@ -116,6 +116,15 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/recycler_view"
             app:srcCompat="@drawable/ic_outline_mic" />
+
+        <TextView
+            android:id="@+id/speech_detected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/no_speech_detected"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/record_button" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
