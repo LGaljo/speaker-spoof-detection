@@ -1,5 +1,0 @@
-/build
-#**/assets/*.tflite
-**/assets/*.tflite
-**/assets/*.wav
-**/assets/*.txt
