@@ -1,5 +1,4 @@
 from tflite_support.metadata_writers import audio_classifier
-from tflite_support.metadata_writers import metadata_info
 from tflite_support.metadata_writers import writer_utils
 
 AudioClassifierWriter = audio_classifier.MetadataWriter

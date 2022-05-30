@@ -1,6 +1,5 @@
-import os
 import csv
-import shutil
+import os
 
 sample_dir = 'DS_10283_3055'
 metadata_path = 'DS_10283_3055/metadata.csv'

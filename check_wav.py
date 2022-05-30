@@ -1,7 +1,5 @@
 import os
 import wave
-import pandas
-import sys
 
 
 def checkwav(filename):

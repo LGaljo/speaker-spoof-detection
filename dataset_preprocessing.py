@@ -1,17 +1,7 @@
 import os
 import pathlib
 
-import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
 import tensorflow as tf
-from math import ceil, floor
-
-from keras import layers
-from keras import models
-
-from tensorflow.python.framework import ops
-from tensorflow.python.framework import dtypes
 
 labels = ['spoof', 'genuine']
 AUTOTUNE = tf.data.AUTOTUNE

@@ -5,13 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import tensorflow as tf
-from math import ceil, floor
-
-from keras import layers
-from keras import models
-
-from tensorflow.python.framework import ops
-from tensorflow.python.framework import dtypes
 
 # Set the seed value for experiment reproducibility.
 # seed = 42
@@ -27,6 +20,7 @@ DATASET_PATH_TRAIN = 'DS_10283_3055/ASVspoof2017_V2_train'
 DATASET_PATH_DEV = 'DS_10283_3055/ASVspoof2017_V2_dev'
 DATASET_PATH_EVAL = 'DS_10283_3055/ASVspoof2017_V2_eval'
 OWNDATASET_PATH = 'owndataset'
+
 
 def load_model():
     new_model = tf.keras.models.load_model('saved_model/model')
@@ -92,7 +86,7 @@ def run_test(model, path_to_dataset):
     print("Sensitivity/Recall ", recall)
     print("Precision ", precision)
 
-    print("F1 Score ", 2 * ((precision * recall)/(precision + recall)))
+    print("F1 Score ", 2 * ((precision * recall) / (precision + recall)))
 
     plt.figure(figsize=(10, 8))
     sns.heatmap(confusion_mtx,
