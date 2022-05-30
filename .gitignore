@@ -5,3 +5,11 @@ dataset
 owndataset
 unused dataset
 unconverted_dataset
+SpoofDetection/app/build
+SpoofDetection/.gradle/*
+__pycache__
+other
+own_tests
+saved_model
+tflite_model
+imgs

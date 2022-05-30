@@ -1,5 +1,6 @@
 import os
 import pathlib
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,29 +36,31 @@ def load_model():
     return new_model
 
 
+def build_model(sample_rate=16000, duration=1):
+    n_samples = sample_rate * duration
+
+    _model = Sequential(name="spoof_detection")
+    _model.add(layers.Input(shape=(n_samples,), name="waveform_input", dtype='float32'))
+    # _model.add(DebugLayer())
+    _model.add(PreprocessTFLayer())
+    _model.add(layers.BatchNormalization(axis=2))
+    _model.add(layers.Resizing(64, 64))
+    _model.add(layers.Conv2D(64, 3, activation='relu'))
+    _model.add(layers.Conv2D(128, 3, activation='relu'))
+    _model.add(layers.MaxPooling2D())
+    _model.add(layers.Dropout(0.25))
+    _model.add(layers.Flatten())
+    _model.add(layers.Dense(256, activation='relu'))
+    _model.add(layers.Dropout(0.5))
+    _model.add(layers.Dense(len(labels), activation='softmax', name="probabilities"))
+
+    return _model
+
+
 def create_model():
     # Create CNN model
 
-    # Instantiate the `tf.keras.layers.Normalization` layer.
-    # norm_layer = layers.Normalization()
-    # Fit the state of the layer to the spectrograms
-    # with `Normalization.adapt`.
-    # norm_layer.adapt(data=spectrogram_ds.map(map_func=lambda spec, label: spec))
-
-    model = models.Sequential([
-        layers.Input(shape=(61, 513, 1)),
-        DebugLayer(),
-        layers.Resizing(64, 64),
-        # norm_layer,
-        layers.Conv2D(64, 3, activation='relu'),
-        layers.Conv2D(128, 3, activation='relu'),
-        layers.MaxPooling2D(),
-        layers.Dropout(0.25),
-        layers.Flatten(),
-        layers.Dense(256, activation='relu'),
-        layers.Dropout(0.5),
-        layers.Dense(len(labels), activation='softmax'),
-    ])
+    model = build_model()
 
     # Tell more about model
     model.summary()
@@ -65,7 +68,7 @@ def create_model():
     # Prepare for training
     model.compile(
         optimizer=tf.keras.optimizers.Adam(),
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         metrics=['accuracy'],
     )
 
@@ -110,12 +113,18 @@ def train_model(dataset):
     # Save model to disk
     model.save('saved_model/model')
 
-    #
+    # Show training progress
     metrics = history.history
     plt.plot(history.epoch, metrics['loss'], metrics['val_loss'])
     plt.legend(['loss', 'val_loss'])
-    plt.xlabel('Epochs')
-    plt.ylabel('Share')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.show()
+
+    plt.plot(history.epoch, metrics['accuracy'], metrics['val_accuracy'])
+    plt.legend(['accuracy', 'val_accuracy'])
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
     plt.show()
 
 
