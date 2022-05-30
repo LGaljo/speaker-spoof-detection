@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
     private var hashMap: HashMap<String, Float> = HashMap()
     var startTime: Long = System.currentTimeMillis();
 
+    private var classifiying = false;
     private val threshold = 0.9f;
     private var speaking = false;
     private var timeDetecting = 0.0f;
@@ -71,11 +72,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Input switch to turn on/off classification
-        keepScreenOn(bindings!!.inputSwitch.isChecked)
-        bindings!!.inputSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) startAudioClassification() else stopAudioClassification()
-            keepScreenOn(isChecked)
-        }
+//        keepScreenOn(bindings!!.inputSwitch.isChecked)
+//        bindings!!.inputSwitch.setOnCheckedChangeListener { _, isChecked ->
+//            if (isChecked) startAudioClassification() else stopAudioClassification()
+//            keepScreenOn(isChecked)
+//        }
 
         // Slider which control how often the classification task should run
         bindings!!.classificationIntervalSlider.value = classificationInterval.toFloat()
@@ -89,13 +90,25 @@ class MainActivity : AppCompatActivity() {
         }
         bindings!!.recordButton.setOnClickListener {
             // Request microphone permission and start running classification
-            requestMicrophonePermission()
-            bindings!!.recordButton.setImageDrawable(
-                AppCompatResources.getDrawable(
-                    applicationContext,
-                    R.drawable.ic_outline_stop_circle
+            if (!classifiying) {
+                requestMicrophonePermission()
+                bindings!!.recordButton.setImageDrawable(
+                    AppCompatResources.getDrawable(
+                        applicationContext,
+                        R.drawable.ic_outline_stop_circle
+                    )
                 )
-            )
+            } else {
+                stopAudioClassification();
+                bindings!!.layout.setBackgroundColor(getColor(android.R.color.white))
+                bindings!!.recordButton.setImageDrawable(
+                    AppCompatResources.getDrawable(
+                        applicationContext,
+                        R.drawable.ic_outline_mic
+                    )
+                )
+                classifiying = false
+            }
         }
 
         // Create a handler to run classification in a background thread
@@ -108,6 +121,8 @@ class MainActivity : AppCompatActivity() {
     private fun startAudioClassification() {
         // If the audio classifier is initialized and running, do nothing.
         if (audioClassifier != null) return;
+
+        classifiying = true
 
         // Initialize the audio classifier
         val options = AudioClassifierOptions.builder()
@@ -148,7 +163,6 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     runOnUiThread {
                         bindings!!.speechDetected.text = getString(R.string.speech_detected)
-
                     }
                 }
 
@@ -184,13 +198,13 @@ class MainActivity : AppCompatActivity() {
 
                 // Rerun the classification for at most 10 sec
                 if (System.currentTimeMillis() - startTime < 10000) {
-                    handler.postDelayed(this, classificationInterval)
-
                     // Updating the UI
                     runOnUiThread {
                         probabilitiesAdapter.categoryList = filteredModelOutput
                         probabilitiesAdapter.notifyDataSetChanged()
                     }
+
+                    handler.postDelayed(this, classificationInterval)
                 } else {
                     val clfs: ArrayList<Category> = ArrayList()
                     clfs.add(Category("spoof", hashMap["spoof"]!!))
@@ -206,6 +220,7 @@ class MainActivity : AppCompatActivity() {
 
                         probabilitiesAdapter.categoryList = clfs
                         probabilitiesAdapter.notifyDataSetChanged()
+                        bindings!!.speechDetected.text = ""
                     }
                     bindings?.recordButton?.setImageDrawable(
                         AppCompatResources.getDrawable(
@@ -213,6 +228,7 @@ class MainActivity : AppCompatActivity() {
                             R.drawable.ic_outline_mic
                         )
                     )
+                    classifiying = false
                     stopAudioClassification()
                 }
             }
